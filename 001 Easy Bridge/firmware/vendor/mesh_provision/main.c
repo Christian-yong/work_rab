@@ -31,7 +31,7 @@ extern void user_init();
 extern void main_loop ();
 
 #if (HCI_ACCESS==HCI_USE_UART)
-#include "../../proj/drivers/uart.h"
+#include "proj/drivers/uart.h"
 extern my_fifo_t hci_rx_fifo;
 
 u16 uart_tx_irq=0, uart_rx_irq=0;
@@ -104,11 +104,13 @@ _attribute_ram_code_ int main (void)    //must run in ramcode
 	cpu_wakeup_init(LDO_MODE,EXTERNAL_XTAL_24M);
 #endif
 
-	int deepRetWakeUp = pm_is_MCU_deepRetentionWakeup();  //MCU deep retention wakeUp
+	//*****************************************************ÐÂÐÞ¸Ä
+	/*int deepRetWakeUp = */pm_is_MCU_deepRetentionWakeup();  //MCU deep retention wakeUp
 
 	rf_drv_init(RF_MODE_BLE_1M);
 
-	gpio_init( !deepRetWakeUp );  //analog resistance will keep available in deepSleep mode, so no need initialize again
+	//*********************************ÐÂ×¢ÊÍµô
+	//gpio_init( !deepRetWakeUp );  //analog resistance will keep available in deepSleep mode, so no need initialize again
 
 #if (CLOCK_SYS_CLOCK_HZ == 16000000)
 	clock_init(SYS_CLK_16M_Crystal);

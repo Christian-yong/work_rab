@@ -55,8 +55,8 @@ format: please refer to spec "4.2.1.1 Composition Data Page 0"
 
 #if (__PROJECT_MESH_PRO__ || __PROJECT_MESH_GW_NODE__)  // must define in TC32_CC_Assember ->General , too. because cstartup.s can't read predefine value in TC32_compiler-->symbols
     #if ((MCU_CORE_TYPE == MCU_CORE_8258) || (MCU_CORE_TYPE == MCU_CORE_8278))
-#define MESH_PID_SEL		(PID_GATEWAY)
-#define MESH_VID		    FW_VERSION_TELINK_RELEASE       // user can redefine
+#define MESH_PID_SEL		GY_PID//(PID_GATEWAY)//**********************************新修改
+#define MESH_VID		    GY_VID//FW_VERSION_TELINK_RELEASE       // user can redefine//**********************************新修改
     #else // if (CHIP_TYPE == CHIP_TYPE_8269)
 #define MESH_PID_SEL		(PID_GATEWAY)
 #define MESH_VID		    FW_VERSION_TELINK_RELEASE       // user can redefine

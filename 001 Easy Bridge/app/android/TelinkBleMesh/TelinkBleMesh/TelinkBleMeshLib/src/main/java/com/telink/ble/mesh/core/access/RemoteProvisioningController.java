@@ -290,36 +290,9 @@ public class RemoteProvisioningController implements ProvisioningBridge {
         }
     };
 
+    // draft feature
     private void onMeshMessagePrepared(MeshMessage meshMessage) {
-        log("remote provisioning message prepared: " + meshMessage.getClass().getSimpleName()
-                + String.format(" opcode: 0x%04X -- dst: 0x%04X -- params: ", meshMessage.getOpcode(), meshMessage.getDestinationAddress())
-                + Arrays.bytesToHexString(meshMessage.getParams()));
-        if (accessBridge != null) {
-            boolean isMessageSent = accessBridge.onAccessMessagePrepared(meshMessage, AccessBridge.MODE_REMOTE_PROVISIONING);
-            if (!isMessageSent) {
-                /*
-                 * message send error
-                 */
-                int opcode = meshMessage.getOpcode();
-                log(String.format("remote provisioning message send error : %04X", opcode));
-                if (meshMessage.getOpcode() == Opcode.REMOTE_PROV_PDU_SEND.value) {
-                    synchronized (WAITING_LOCK) {
-                        outboundReportWaiting = true;
-                    }
-                    resendProvisionPdu();
-                } else {
-                    onCommandError(meshMessage.getOpcode());
-                }
 
-            } else {
-                if (meshMessage.getOpcode() == Opcode.REMOTE_PROV_PDU_SEND.value) {
-                    synchronized (WAITING_LOCK) {
-                        outboundReportWaiting = true;
-                    }
-                    resendProvisionPdu();
-                }
-            }
-        }
     }
 
 
@@ -349,7 +322,34 @@ public class RemoteProvisioningController implements ProvisioningBridge {
      * send provisioning pdu by ProvisioningController
      */
     @Override
-    public void onCommandPrepared(byte type, byte[] data) {}
+    public void onCommandPrepared(byte type, byte[] data) {
+        if (type != ProxyPDU.TYPE_PROVISIONING_PDU) return;
+
+        synchronized (WAITING_LOCK) {
+            if (outboundReportWaiting) {
+                if (cachePdu == null) {
+                    cachePdu = data;
+                } else {
+                    log("cache pdu already exists");
+                }
+                return;
+            }
+        }
+
+        transmittingPdu = data.clone();
+
+        ProvisioningPduSendMessage provisioningPduSendMessage = ProvisioningPduSendMessage.getSimple(
+                provisioningDevice.getServerAddress(),
+                0,
+                (byte) this.outboundNumber,
+                transmittingPdu
+        );
+        provisioningPduSendMessage.setRetryCnt(8);
+//        delayHandler.removeCallbacks(provisioningPduTimeoutTask);
+//        delayHandler.postDelayed(provisioningPduTimeoutTask, OUTBOUND_WAITING_TIMEOUT);
+        log("send provisioning pdu: " + this.outboundNumber);
+        onMeshMessagePrepared(provisioningPduSendMessage);
+    }
 
 
     private void log(String logMessage) {

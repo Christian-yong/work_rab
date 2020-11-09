@@ -23,18 +23,33 @@ package com.telink.ble.mesh.foundation;
 
 import android.content.Context;
 
+import com.telink.ble.mesh.core.Encipher;
+import com.telink.ble.mesh.core.ble.GattRequest;
 import com.telink.ble.mesh.core.message.MeshMessage;
+import com.telink.ble.mesh.core.networking.NetworkLayerPDU;
+import com.telink.ble.mesh.core.proxy.ProxyConfigurationPDU;
 import com.telink.ble.mesh.entity.RemoteProvisioningDevice;
 import com.telink.ble.mesh.foundation.parameter.AutoConnectParameters;
 import com.telink.ble.mesh.foundation.parameter.BindingParameters;
 import com.telink.ble.mesh.foundation.parameter.FastProvisioningParameters;
+import com.telink.ble.mesh.foundation.parameter.GattConnectionParameters;
 import com.telink.ble.mesh.foundation.parameter.GattOtaParameters;
 import com.telink.ble.mesh.foundation.parameter.MeshOtaParameters;
 import com.telink.ble.mesh.foundation.parameter.ProvisioningParameters;
 import com.telink.ble.mesh.foundation.parameter.ScanParameters;
+import com.telink.ble.mesh.util.Arrays;
 import com.telink.ble.mesh.util.MeshLogger;
 
+import org.spongycastle.jcajce.provider.asymmetric.ec.BCECPrivateKey;
+import org.spongycastle.jcajce.provider.asymmetric.ec.BCECPublicKey;
+import org.spongycastle.jce.spec.ECNamedCurveSpec;
+import org.spongycastle.util.BigIntegers;
+
+import java.math.BigInteger;
+import java.security.KeyPair;
+import java.security.PrivateKey;
 import java.security.Security;
+import java.security.spec.ECFieldFp;
 
 import androidx.annotation.NonNull;
 
@@ -76,6 +91,9 @@ public class MeshService implements MeshController.EventCallback {
         }
     }
 
+    public void checkBluetoothState(){
+        mController.checkBluetoothState();
+    }
 
     public void setupMeshNetwork(MeshConfiguration configuration) {
         mController.setupMeshNetwork(configuration);
@@ -177,6 +195,13 @@ public class MeshService implements MeshController.EventCallback {
         mController.idle(disconnect);
     }
 
+    public void startGattConnection(GattConnectionParameters parameters){
+        mController.startGattConnection(parameters);
+    }
+
+    public boolean sendGattRequest(GattRequest request){
+        return mController.sendGattRequest(request);
+    }
 
     /**
      * send mesh message

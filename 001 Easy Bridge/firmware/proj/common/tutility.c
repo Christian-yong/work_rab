@@ -217,8 +217,8 @@ int my_fifo_push (my_fifo_t *f, u8 *p, u16 n, u8 *head, u8 head_len)
 	}
 	u8 r = irq_disable();
 	u8 *pd = f->p + (f->wptr & (f->num-1)) * f->size;
-	*pd++ = (n+head_len) & 0xff;
-	*pd++ = (n+head_len) >> 8;
+	*pd++ = (n+head_len) & 0xff;//****************************新注释掉//***********不能注释掉
+	*pd++ = (n+head_len) >> 8;//****************************新注释掉//************不能注释掉
 	foreach(i,head_len){
 		*pd++ = *head++;
 	}

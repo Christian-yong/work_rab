@@ -1,6 +1,7 @@
 /* Copyright 2014, Kenneth MacKay. Licensed under the BSD 2-clause license. */
 
 #include "uECC.h"
+#include "uECC_config.h"
 #include "uECC_vli.h"
 #include "vendor/common/mi_api/telink_sdk_mible_api.h"
 #include "proj/mcu/watchdog_i.h"
@@ -179,11 +180,11 @@ static cmpresult_t uECC_vli_cmp_unsafe(const uECC_word_t *left,
                                        wordcount_t num_words);
 
 #if (uECC_PLATFORM == uECC_arm || uECC_PLATFORM == uECC_arm_thumb || \
-        uECC_PLATFORM == uECC_arm_thumb2)
+        uECC_PLATFORM == uECC_arm_thumb2) && defined( __GNUC__ )
     #include "asm_arm.inc"
 #endif
 
-#if (uECC_PLATFORM == uECC_avr)
+#if (uECC_PLATFORM == uECC_avr) && defined( __GNUC__ )
     #include "asm_avr.inc"
 #endif
 
@@ -1734,3 +1735,45 @@ void uECC_point_mult(uECC_word_t *result,
 }
 
 #endif /* uECC_ENABLE_VLI_API */
+
+#if !MI_API_ENABLE
+typedef uint8_t (ecc256_sk_t)[256 / 8];
+typedef uint8_t (ecc256_pk_t)[256 / 8 * 2];
+typedef uint8_t (ecc256_ss_t)[256 / 8];
+
+static int swap_endian(const uint8_t *in, uint8_t *out, uint32_t size)
+{
+    if (out < in + size && in < out + size)
+        return -1;
+
+    for(int i = 0; i < size; i++)
+        out[i] = in[size-1-i];
+
+    return 0;
+}
+
+int micro_ecc_shared_secret_compute(void *p_ctx, uint8_t const *p_sk, uint8_t const *p_pk, uint8_t *p_ss)
+{
+    ecc256_sk_t le_sk;
+    ecc256_pk_t le_pk;
+    ecc256_ss_t le_ss;
+    const struct uECC_Curve_t * p_curve;
+
+    p_curve = uECC_secp256r1();
+    swap_endian(&p_sk[0], &le_sk[0], 32);
+    swap_endian(&p_pk[0], &le_pk[0], 32);
+    swap_endian(&p_pk[32], &le_pk[32], 32);
+    if (!uECC_valid_public_key(le_pk, p_curve))
+        return -4;
+
+    int ret = uECC_shared_secret(le_pk, le_sk, le_ss, p_curve);
+    if (!ret)
+    {
+        return -3;
+    }
+
+    swap_endian(&le_ss[0], &p_ss[0], 32);
+    return 0;
+}
+
+#endif

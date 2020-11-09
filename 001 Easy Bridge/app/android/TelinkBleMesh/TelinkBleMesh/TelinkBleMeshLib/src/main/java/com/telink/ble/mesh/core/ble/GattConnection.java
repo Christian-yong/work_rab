@@ -1,14 +1,14 @@
 /********************************************************************************************************
- * @file     GattConnection.java 
+ * @file GattConnection.java
  *
- * @brief    for TLSR chips
+ * @brief for TLSR chips
  *
- * @author	 telink
- * @date     Sep. 30, 2010
+ * @author telink
+ * @date Sep. 30, 2010
  *
- * @par      Copyright (c) 2010, Telink Semiconductor (Shanghai) Co., Ltd.
+ * @par Copyright (c) 2010, Telink Semiconductor (Shanghai) Co., Ltd.
  *           All rights reserved.
- *           
+ *
  *			 The information contained herein is confidential and proprietary property of Telink 
  * 		     Semiconductor (Shanghai) Co., Ltd. and is available under the terms 
  *			 of Commercial License Agreement between Telink Semiconductor (Shanghai) 
@@ -17,7 +17,7 @@
  *
  * 			 Licensees are granted free, non-transferable use of the information in this 
  *			 file under Mutual Non-Disclosure Agreement. NO WARRENTY of ANY KIND is provided. 
- *           
+ *
  *******************************************************************************************************/
 package com.telink.ble.mesh.core.ble;
 
@@ -225,8 +225,8 @@ public class GattConnection extends BluetoothGattCallback {
         BluetoothGattService service = getProvisionService();
         if (service == null) return;
         cmd.serviceUUID = service.getUuid();
-        cmd.characteristicUUID = UUIDInfo.PB_OUT_CHARACTERISTIC_UUID;
-        cmd.descriptorUUID = UUIDInfo.CFG_DESCRIPTOR_UUID;
+        cmd.characteristicUUID = UUIDInfo.CHARACTERISTIC_PB_OUT;
+        cmd.descriptorUUID = UUIDInfo.DESCRIPTOR_CFG_UUID;
         cmd.data = new byte[]{0x01, 0x00};
         cmd.type = GattRequest.RequestType.WRITE_DESCRIPTOR;
         sendRequest(cmd);
@@ -240,8 +240,8 @@ public class GattConnection extends BluetoothGattCallback {
         BluetoothGattService service = getProxyService(false);
         if (service == null) return;
         cmd.serviceUUID = service.getUuid();
-        cmd.characteristicUUID = UUIDInfo.PROXY_OUT_CHARACTERISTIC_UUID;
-        cmd.descriptorUUID = UUIDInfo.CFG_DESCRIPTOR_UUID;
+        cmd.characteristicUUID = UUIDInfo.CHARACTERISTIC_PROXY_OUT;
+        cmd.descriptorUUID = UUIDInfo.DESCRIPTOR_CFG_UUID;
         cmd.data = new byte[]{0x01, 0x00};
         cmd.type = GattRequest.RequestType.WRITE_DESCRIPTOR;
         sendRequest(cmd);
@@ -251,8 +251,8 @@ public class GattConnection extends BluetoothGattCallback {
         GattRequest cmd = GattRequest.newInstance();
         if (!isConnected()) return false;
         if (!checkOnlineStatusService()) return false;
-        cmd.serviceUUID = UUIDInfo.SERVICE_UUID_ONLINE_STATUS;
-        cmd.characteristicUUID = UUIDInfo.CHARACTERISTIC_UUID_ONLINE_STATUS;
+        cmd.serviceUUID = UUIDInfo.SERVICE_ONLINE_STATUS;
+        cmd.characteristicUUID = UUIDInfo.CHARACTERISTIC_ONLINE_STATUS;
         cmd.data = new byte[]{0x01};
         cmd.type = GattRequest.RequestType.WRITE_NO_RESPONSE;
         sendRequest(cmd);
@@ -262,7 +262,7 @@ public class GattConnection extends BluetoothGattCallback {
 
     private void sendPvRequest(byte[] data) {
         GattRequest cmd = GattRequest.newInstance();
-        cmd.characteristicUUID = UUIDInfo.PB_IN_CHARACTERISTIC_UUID;
+        cmd.characteristicUUID = UUIDInfo.CHARACTERISTIC_PB_IN;
         BluetoothGattService service = getProvisionService();
         if (service == null) return;
         cmd.serviceUUID = service.getUuid();
@@ -276,7 +276,7 @@ public class GattConnection extends BluetoothGattCallback {
         BluetoothGattService service = getProxyService(false);
         if (service == null) return;
         cmd.serviceUUID = service.getUuid();
-        cmd.characteristicUUID = UUIDInfo.PROXY_IN_CHARACTERISTIC_UUID;
+        cmd.characteristicUUID = UUIDInfo.CHARACTERISTIC_PROXY_IN;
         cmd.data = data.clone();
         cmd.type = GattRequest.RequestType.WRITE_NO_RESPONSE;
         sendRequest(cmd);
@@ -290,7 +290,7 @@ public class GattConnection extends BluetoothGattCallback {
             gattRequest = GattRequest.newInstance();
             gattRequest.type = GattRequest.RequestType.ENABLE_NOTIFY;
             gattRequest.serviceUUID = provisionService.getUuid();
-            gattRequest.characteristicUUID = UUIDInfo.PB_OUT_CHARACTERISTIC_UUID;
+            gattRequest.characteristicUUID = UUIDInfo.CHARACTERISTIC_PB_OUT;
             sendRequest(gattRequest);
         }
 
@@ -299,15 +299,15 @@ public class GattConnection extends BluetoothGattCallback {
             gattRequest = GattRequest.newInstance();
             gattRequest.type = GattRequest.RequestType.ENABLE_NOTIFY;
             gattRequest.serviceUUID = proxyService.getUuid();
-            gattRequest.characteristicUUID = UUIDInfo.PROXY_OUT_CHARACTERISTIC_UUID;
+            gattRequest.characteristicUUID = UUIDInfo.CHARACTERISTIC_PROXY_OUT;
             sendRequest(gattRequest);
         }
 
         {
             gattRequest = GattRequest.newInstance();
             gattRequest.type = GattRequest.RequestType.ENABLE_NOTIFY;
-            gattRequest.serviceUUID = UUIDInfo.SERVICE_UUID_ONLINE_STATUS;
-            gattRequest.characteristicUUID = UUIDInfo.CHARACTERISTIC_UUID_ONLINE_STATUS;
+            gattRequest.serviceUUID = UUIDInfo.SERVICE_ONLINE_STATUS;
+            gattRequest.characteristicUUID = UUIDInfo.CHARACTERISTIC_ONLINE_STATUS;
             sendRequest(gattRequest);
         }
     }
@@ -315,9 +315,9 @@ public class GattConnection extends BluetoothGattCallback {
     private boolean checkOnlineStatusService() {
         if (this.mServices == null) return false;
         for (BluetoothGattService service : mServices) {
-            if (service.getUuid().equals(UUIDInfo.SERVICE_UUID_ONLINE_STATUS)) {
+            if (service.getUuid().equals(UUIDInfo.SERVICE_ONLINE_STATUS)) {
                 for (BluetoothGattCharacteristic characteristic : service.getCharacteristics()) {
-                    if (characteristic.getUuid().equals(UUIDInfo.CHARACTERISTIC_UUID_ONLINE_STATUS)) {
+                    if (characteristic.getUuid().equals(UUIDInfo.CHARACTERISTIC_ONLINE_STATUS)) {
                         return true;
                     }
                 }
@@ -331,9 +331,9 @@ public class GattConnection extends BluetoothGattCallback {
         if (services == null) return null;
         for (BluetoothGattService service :
                 services) {
-            if (service.getUuid().equals(UUIDInfo.PROVISION_SERVICE_UUID) || service.getUuid().equals(UUIDInfo.UNUSED_SERVICE_UUID)) {
+            if (service.getUuid().equals(UUIDInfo.SERVICE_PROVISION) || service.getUuid().equals(UUIDInfo.SERVICE_MESH_FLEX)) {
                 for (BluetoothGattCharacteristic characteristic : service.getCharacteristics()) {
-                    if (characteristic.getUuid().equals(UUIDInfo.PB_IN_CHARACTERISTIC_UUID)) {
+                    if (characteristic.getUuid().equals(UUIDInfo.CHARACTERISTIC_PB_IN)) {
                         return service;
                     }
                 }
@@ -344,16 +344,16 @@ public class GattConnection extends BluetoothGattCallback {
 
     /**
      * @param real true: only check PROXY_SERVICE_UUID,
-     *             false: check PROXY_SERVICE_UUID and UNUSED_SERVICE_UUID
+     *             false: check PROXY_SERVICE_UUID and MESH_FLEX_SERVICE_UUID
      */
     private BluetoothGattService getProxyService(boolean real) {
         final List<BluetoothGattService> services = this.mServices;
         if (services == null) return null;
         for (BluetoothGattService service : services) {
-            if ((service.getUuid().equals(UUIDInfo.PROXY_SERVICE_UUID))
-                    || (!real && service.getUuid().equals(UUIDInfo.UNUSED_SERVICE_UUID))) {
+            if ((service.getUuid().equals(UUIDInfo.SERVICE_PROXY))
+                    || (!real && service.getUuid().equals(UUIDInfo.SERVICE_MESH_FLEX))) {
                 for (BluetoothGattCharacteristic characteristic : service.getCharacteristics()) {
-                    if (characteristic.getUuid().equals(UUIDInfo.PROXY_IN_CHARACTERISTIC_UUID)) {
+                    if (characteristic.getUuid().equals(UUIDInfo.CHARACTERISTIC_PROXY_IN)) {
                         return service;
                     }
                 }
@@ -523,6 +523,7 @@ public class GattConnection extends BluetoothGattCallback {
         this.mHandler.removeCallbacks(mServicesDiscoveringRunnable);
         this.mServices = null;
         if (isConnectWaiting.get()) {
+            isConnectWaiting.set(false);
             this.connect();
         } else {
             if (mConnectionCallback != null) {
@@ -537,6 +538,11 @@ public class GattConnection extends BluetoothGattCallback {
     public String getMacAddress() {
         if (mBluetoothDevice == null) return null;
         return mBluetoothDevice.getAddress();
+    }
+
+    public String getDeviceName() {
+        if (mBluetoothDevice == null) return null;
+        return mBluetoothDevice.getName();
     }
 
     /************************************************************************
@@ -623,9 +629,10 @@ public class GattConnection extends BluetoothGattCallback {
 
     private void onNotify(BluetoothGattCharacteristic characteristic, byte[] data) {
         final UUID charUUID = characteristic.getUuid();
-        if (charUUID.equals(UUIDInfo.CHARACTERISTIC_UUID_ONLINE_STATUS)) {
+        final UUID serviceUUID = characteristic.getService().getUuid();
+        if (!charUUID.equals(UUIDInfo.CHARACTERISTIC_PB_OUT) && !charUUID.equals(UUIDInfo.CHARACTERISTIC_PROXY_OUT)) {
             if (mConnectionCallback != null) {
-                mConnectionCallback.onNotify(charUUID, data);
+                mConnectionCallback.onNotify(serviceUUID, charUUID, data);
             }
             return;
         }
@@ -646,7 +653,7 @@ public class GattConnection extends BluetoothGattCallback {
             return;
         }
         if (mConnectionCallback != null) {
-            mConnectionCallback.onNotify(charUUID, completePacket);
+            mConnectionCallback.onNotify(serviceUUID, charUUID, completePacket);
         }
     }
 
@@ -722,7 +729,7 @@ public class GattConnection extends BluetoothGattCallback {
     private void onRequestSuccess(byte[] data) {
         GattRequest gattRequest = mGattRequestQueue.poll();
         if (gattRequest != null) {
-            log("request success: " + gattRequest.tag, MeshLogger.LEVEL_VERBOSE);
+            log("request success: tag - " + gattRequest.tag, MeshLogger.LEVEL_VERBOSE);
             GattRequest.Callback requestCallback = gattRequest.callback;
             if (requestCallback != null) {
                 requestCallback.success(gattRequest, data);
@@ -846,12 +853,12 @@ public class GattConnection extends BluetoothGattCallback {
                     }
                 } else {
                     success = false;
-                    errorMsg = "read descriptor error";
+                    errorMsg = "read descriptor error - descriptor not found";
                 }
 
             } else {
                 success = false;
-                errorMsg = "read characteristic error";
+                errorMsg = "read characteristic error - characteristic not found";
             }
         } else {
             success = false;
@@ -929,7 +936,7 @@ public class GattConnection extends BluetoothGattCallback {
 
             } else {
                 success = false;
-                errorMsg = "read characteristic error";
+                errorMsg = "read characteristic error - characteristic not found";
             }
         } else {
             success = false;
@@ -1294,7 +1301,7 @@ public class GattConnection extends BluetoothGattCallback {
 
         void onServicesDiscovered(List<BluetoothGattService> services);
 
-        void onNotify(UUID charUUID, byte[] data);
+        void onNotify(UUID serviceUUID, UUID charUUID, byte[] data);
     }
 
     private void log(String logMessage) {

@@ -19,13 +19,13 @@
  *			 file under Mutual Non-Disclosure Agreement. NO WARRENTY of ANY KIND is provided. 
  *           
  *******************************************************************************************************/
-#include "../../proj/tl_common.h"
-#include "../../proj_lib/ble/ll/ll.h"
-#include "../../proj_lib/ble/blt_config.h"
-#include "../../proj_lib/ble/service/ble_ll_ota.h"
+#include "proj/tl_common.h"
+#include "proj_lib/ble/ll/ll.h"
+#include "proj_lib/ble/blt_config.h"
+#include "proj_lib/ble/service/ble_ll_ota.h"
 #include "../common/app_provison.h"
 #include "../common/app_proxy.h"
-#include "../../proj_lib/sig_mesh/app_mesh.h"
+#include "proj_lib/sig_mesh/app_mesh.h"
 #include "../common/app_beacon.h"
 
 #if(1)
@@ -262,6 +262,41 @@ int set_ccc_diaptch(void *p)
 	provision_Out_ccc[0] = pw->dat[0];
 	provision_Out_ccc[1] = pw->dat[1];
 	beacon_send.conn_beacon_flag =1;
+
+	//my_fifo_push_hci_tx_fifo(pw->dat,pw->dat[2]+6, 0, 0);
+	if(pw->dat[0] == 0x20 && pw->dat[1] == 0x20 && pw->dat[3] == GY_GATT_CMD)
+	{
+		static u8 gy_rev_type = 0;
+		if(pw->dat[5] == 1)
+		{
+			gy_rev_type = pw->dat[6];
+		}
+
+		switch(/*pw->dat[6]*/gy_rev_type)
+		{
+		case 0x01://直接透传给WIFI模组
+		{
+			my_fifo_push_hci_tx_fifo(pw->dat,pw->dat[2]+6, 0, 0);
+			break;
+		}
+		case 0x02://获取mesh网络信息和灯信息的指令
+		{
+			if(pw->dat[7] == 0)
+			{
+				gy_gatt_send_mesh_info();//向GATT中发送mesh网络信息
+				gy_gatt_send_node_info();//向GATT中发送节点信息
+			}
+			break;
+		}
+		}
+
+		if(pw->dat[4] == pw->dat[5])
+		{
+			gy_rev_type = 0;
+		}
+
+	}
+
 	return 1;
 }
 #endif

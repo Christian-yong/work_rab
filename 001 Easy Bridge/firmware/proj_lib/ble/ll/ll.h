@@ -36,7 +36,7 @@ extern u8					blt_state;
 	#if MI_API_ENABLE
 #define         VENDOR_ID                       VENDOR_ID_MI
 	#else
-#define         VENDOR_ID                       0x0211
+#define         VENDOR_ID                       GY_CID//0x0211*****************************ÐÂÐÞ¸Ä
 	#endif
 #endif
 #endif

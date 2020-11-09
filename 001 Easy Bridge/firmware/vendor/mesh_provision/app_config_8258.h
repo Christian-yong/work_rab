@@ -26,12 +26,16 @@
 extern "C" {
 #endif
 
-#include "../../vendor/common/version.h"    // include mesh_config.h inside.
+#include "vendor/common/version.h"    // include mesh_config.h inside.
 //////////////////board sel/////////////////////////////////////
 #define PCBA_8258_DONGLE_48PIN          1
 #define PCBA_8258_C1T139A30_V1_0        2
 #define PCBA_8258_C1T139A30_V1_2        3
-#define PCBA_8258_SEL			PCBA_8258_DONGLE_48PIN
+#define PCBA_GY_TURING_MODULE   		4//**********************************新添加
+
+#ifndef PCBA_8258_SEL // user can define in user_app_config.h
+#define PCBA_8258_SEL   PCBA_8258_DONGLE_48PIN//PCBA_GY_TURING_MODULE//PCBA_8258_DONGLE_48PIN//**************************新修改
+#endif
 
 
 #define _USER_CONFIG_DEFINED_	1	// must define this macro to make others known
@@ -56,17 +60,22 @@ extern "C" {
 #define HCI_USE_NONE	0
 #define HCI_USE_UART	1
 #define HCI_USE_USB		2
-#define HCI_ACCESS		HCI_USE_USB
+
+#ifndef HCI_ACCESS
+#define HCI_ACCESS  HCI_USE_UART//HCI_USE_NONE//HCI_USE_USB//****************************新修改
 
 #if (HCI_ACCESS==HCI_USE_UART)
-#define UART_TX_PIN		UART_TX_PB1
-#define UART_RX_PIN		UART_RX_PB0
+#define UART_TX_PIN		GY_UART_TX_PIN//UART_TX_PB1//****************************新修改
+#define UART_RX_PIN		GY_UART_RX_PIN//UART_RX_PB0//****************************新修改
+#endif
 #endif
 
+#ifndef HCI_LOG_FW_EN
 #define HCI_LOG_FW_EN   0
 #if HCI_LOG_FW_EN
 #define DEBUG_INFO_TX_PIN           		GPIO_PB2
 #define PRINT_DEBUG_INFO                    1
+#endif
 #endif
 
 #define ADC_ENABLE		0
@@ -80,7 +89,11 @@ extern "C" {
 #endif
 
 /////////////////// mesh project config /////////////////////////////////
+#ifndef TRANSITION_TIME_DEFAULT_VAL
 #define TRANSITION_TIME_DEFAULT_VAL (0x00)  // 0x41: 1 second // 0x00: means no default transition time
+#endif
+
+#define PROVISIONER_GATT_ADV_EN	    0
 
 /////////////////// MODULE /////////////////////////////////
 #define BLE_REMOTE_PM_ENABLE			0
@@ -89,7 +102,7 @@ extern "C" {
 #define BLE_IR_ENABLE					0
 
 #ifndef BLT_SOFTWARE_TIMER_ENABLE
-#define BLT_SOFTWARE_TIMER_ENABLE		0
+#define BLT_SOFTWARE_TIMER_ENABLE		1//0//**************************************新修改
 #endif
 
 //////////////////////////// KEYSCAN/MIC  GPIO //////////////////////////////////
@@ -120,7 +133,7 @@ extern "C" {
 #define PD5_INPUT_ENABLE		1
 #define	SW1_GPIO				GPIO_PD6
 #define	SW2_GPIO				GPIO_PD5
-#else   // PCBA_8258_DEVELOPMENT_BOARD
+#elif(PCBA_8258_SEL == PCBA_8258_C1T139A30_V1_0)    // PCBA_8258_DEVELOPMENT_BOARD
 #define PULL_WAKEUP_SRC_PD2     PM_PIN_PULLUP_1M	//btn
 #define PULL_WAKEUP_SRC_PD1     PM_PIN_PULLUP_1M	//btn
 #define PD2_INPUT_ENABLE		1
@@ -163,7 +176,9 @@ extern "C" {
 #define PWM_INV_B   (GET_PWM_INVERT_VAL(PWM_B, PWM_FUNC_B))
 #define PWM_INV_W   (GET_PWM_INVERT_VAL(PWM_W, PWM_FUNC_W))
 
+#ifndef GPIO_LED
 #define GPIO_LED	PWM_R
+#endif
 
 ////////////USB DP DM///////////////////////////////////////
 #define PA5_FUNC			AS_USB

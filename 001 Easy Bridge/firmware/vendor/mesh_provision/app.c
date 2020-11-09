@@ -19,37 +19,38 @@
  *			 file under Mutual Non-Disclosure Agreement. NO WARRENTY of ANY KIND is provided. 
  *           
  *******************************************************************************************************/
-#include "../../proj/tl_common.h"
-#include "../../proj_lib/rf_drv.h"
-#include "../../proj_lib/pm.h"
-#include "../../proj_lib/ble/ll/ll.h"
-#include "../../proj_lib/ble/blt_config.h"
-#include "../../proj_lib/ble/ll/ll_whitelist.h"
-#include "../../proj_lib/ble/trace.h"
-#include "../../proj/mcu/pwm.h"
-#include "../../proj_lib/ble/service/ble_ll_ota.h"
-#include "../../proj/drivers/adc.h"
-#include "../../proj_lib/ble/blt_config.h"
-#include "../../proj_lib/ble/ble_smp.h"
-#include "../../proj_lib/mesh_crypto/mesh_crypto.h"
-#include "../../proj_lib/mesh_crypto/mesh_md5.h"
+#include "proj/tl_common.h"
+#include "proj_lib/rf_drv.h"
+#include "proj_lib/pm.h"
+#include "proj_lib/ble/ll/ll.h"
+#include "proj_lib/ble/blt_config.h"
+#include "proj_lib/ble/ll/ll_whitelist.h"
+#include "proj_lib/ble/trace.h"
+#include "proj/mcu/pwm.h"
+#include "proj_lib/ble/service/ble_ll_ota.h"
+#include "proj/drivers/adc.h"
+#include "proj_lib/ble/blt_config.h"
+#include "proj_lib/ble/ble_smp.h"
+#include "proj_lib/mesh_crypto/mesh_crypto.h"
+#include "proj_lib/mesh_crypto/mesh_md5.h"
 
-#include "../../proj_lib/sig_mesh/app_mesh.h"
+#include "proj_lib/sig_mesh/app_mesh.h"
 #include "../common/app_provison.h"
 #include "../common/app_beacon.h"
 #include "../common/app_proxy.h"
 #include "../common/app_health.h"
-#include "../../proj/drivers/keyboard.h"
+#include "../common/mesh_ota.h"
+#include "proj/drivers/keyboard.h"
 #include "app.h"
-#include "../../stack/ble/gap/gap.h"
+#include "stack/ble/gap/gap.h"
 #include "vendor/common/blt_soft_timer.h"
 #include "proj/drivers/rf_pa.h"
 
 #if (HCI_ACCESS==HCI_USE_UART)
-#include "../../proj/drivers/uart.h"
+#include "proj/drivers/uart.h"
 #endif
 
-#if(__PROJECT_MESH_PRO__&&(!AIS_ENABLE))
+#if(MCU_CORE_TYPE == MCU_CORE_8269) // 8269 ram limited
 MYFIFO_INIT(blt_rxfifo, 64, 8);
 MYFIFO_INIT(blt_txfifo, 40, 4);
 #else
@@ -76,9 +77,20 @@ STATIC_ASSERT(FLASH_ADR_MD_SENSOR != FLASH_ADR_VC_NODE_INFO);   // address confl
 int soft_timer_test0(void)
 {
 	//gpio 0 toggle to see the effect
-	DBG_CHN4_TOGGLE;
+	//DBG_CHN4_TOGGLE;
 	static u32 soft_timer_cnt0 = 0;
-	soft_timer_cnt0++;
+	//soft_timer_cnt0++;
+	gy_10ms_timer(soft_timer_cnt0++);
+	return 0;
+}
+
+int soft_timer_test1(void)
+{
+	//gpio 0 toggle to see the effect
+	//DBG_CHN4_TOGGLE;
+	static u32 soft_timer_cnt1 = 0;
+	//soft_timer_cnt1++;
+	gy_1s_timer(soft_timer_cnt1++);
 	return 0;
 }
 #endif
@@ -113,7 +125,7 @@ int app_event_handler (u32 h, u8 *p, int n)
 			#if DEBUG_MESH_DONGLE_IN_VC_EN
 			send_to_hci = mesh_dongle_adv_report2vc(pa->data, MESH_ADV_PAYLOAD);
 			#else
-			send_to_hci = app_event_handler_adv(pa->data, ADV_FROM_MESH, 1);
+			send_to_hci = app_event_handler_adv(pa->data, MESH_BEAR_ADV, 1);
 			#endif
 		}
 
@@ -290,16 +302,28 @@ int gateway_common_cmd_rsp(u8 code,u8 *p_par,u16 len )
 
 u8 gateway_provision_rsp_cmd(u16 unicast_adr)
 {
+#if 0
 	return gateway_common_cmd_rsp(HCI_GATEWAY_RSP_UNICAST , (u8*)(&unicast_adr),2);
+#else
+	return 0;
+#endif
 }
 u8 gateway_keybind_rsp_cmd(u8 opcode )
 {
+#if 0
 	return gateway_common_cmd_rsp(HCI_GATEWAY_KEY_BIND_RSP , (u8*)(&opcode),1);
+#else
+	return 0;
+#endif
 }
 
 u8 gateway_model_cmd_rsp(u8 *para,u16 len )
 {
+#if 0
 	return gateway_common_cmd_rsp(HCI_GATEWAY_RSP_OP_CODE , para,len);
+#else
+	return 0;
+#endif
 }
 
 u8 gateway_heartbeat_cb(u8 *para,u8 len )
@@ -310,27 +334,61 @@ u8 gateway_heartbeat_cb(u8 *para,u8 len )
 
 u8 gateway_upload_mac_address(u8 *p_mac,u8 *p_adv)
 {
+#if 0
 	u8 para[40];//0~5 mac,adv ,6,rssi ,7~8 dc
 	u8 len;
 	len = p_adv[0];
 	memcpy(para,p_mac,6);
 	memcpy(para+6,p_adv,len+4);
 	return gateway_common_cmd_rsp(HCI_GATEWAY_CMD_UPDATE_MAC,para,len+10);
+#else
+	if(gy_provision_automate_info.function_flag == gy_enable && gy_provision_automate_info.provision_step == gy_scan && gy_provision_automate_info.current_step_state == gy_ing)
+	{
+		memcpy(gy_provision_automate_info.current_node_mac,p_mac,6);
+		gy_provision_automate_info.current_step_state = gy_end;
+	}
+	return 0;
+#endif
 }
 
 u8 gateway_upload_provision_suc_event(u8 evt,u16 adr,u8 *p_mac,u8 *p_uuid)
 {
+#if 0
     gateway_prov_event_t prov;
     prov.eve = evt;
     prov.adr = adr;
     memcpy(prov.mac,p_mac,6);
     memcpy(prov.uuid,p_uuid,16);
 	return gateway_common_cmd_rsp(HCI_GATEWAY_CMD_PROVISION_EVT,(u8*)&prov,sizeof(prov));
+#else
+	if(gy_provision_automate_info.function_flag == gy_enable && gy_provision_automate_info.provision_step == gy_set_node && gy_provision_automate_info.current_step_state == gy_ing)
+	{
+		if(evt == 1)
+		{
+			memcpy(gy_node_info.mac, p_mac,6);
+			gy_provision_automate_info.current_step_state = gy_end;
+		}
+		else
+		{
+			gy_provision_automate_info.provision_step = gy_scan;
+			gy_provision_automate_info.current_step_state = gy_start;
+		}
+	}
+	return 0;
+#endif
 }
 
 u8 gateway_upload_keybind_event(u8 evt)
 {
+#if 0
 	return gateway_common_cmd_rsp(HCI_GATEWAY_CMD_KEY_BIND_EVT,&evt,1);
+#else
+	if(gy_provision_automate_info.function_flag == gy_enable && gy_provision_automate_info.provision_step == gy_bind_node && gy_provision_automate_info.current_step_state == gy_ing)
+	{
+		gy_provision_automate_info.current_step_state = gy_end;
+	}
+	return 0;
+#endif
 }
 
 u8 gateway_upload_node_ele_cnt(u8 ele_cnt)
@@ -339,9 +397,13 @@ u8 gateway_upload_node_ele_cnt(u8 ele_cnt)
 }
 u8 gateway_upload_node_info(u16 unicast)
 {
+#if 0
 	VC_node_info_t * p_info;
 	p_info = get_VC_node_info(unicast,1);
 	return gateway_common_cmd_rsp(HCI_GATEWAY_CMD_SEND_NODE_INFO,(u8 *)p_info,sizeof(VC_node_info_t));
+#else
+	return 0;
+#endif
 }
 
 u8 gateway_upload_provision_self_sts(u8 sts)
@@ -358,7 +420,7 @@ u8 gateway_upload_provision_self_sts(u8 sts)
 
 u8 gateway_upload_mesh_ota_sts(u8 *p_dat,int len)
 {
-	return gateway_common_cmd_rsp(HCI_GATEWAY_CMD_SEND_MESH_OTA_STS,p_dat,sizeof(len));
+	return gateway_common_cmd_rsp(HCI_GATEWAY_CMD_SEND_MESH_OTA_STS,p_dat,len);
 }
 
 u8 gateway_upload_mesh_sno_val()
@@ -378,8 +440,12 @@ u8 gateway_upload_dev_uuid(u8 *p_uuid,u8 *p_mac)
 
 u8 gateway_upload_ividx(u8 *p_ivi)
 {
+#if 0
     return gateway_common_cmd_rsp(HCI_GATEWAY_CMD_SEND_IVI,
                         p_ivi,4);
+#else
+    return 0;
+#endif
 }
 
 u8 gateway_upload_mesh_src_cmd(u16 op,u16 src,u8 *p_ac_par)
@@ -394,6 +460,7 @@ u8 gateway_upload_mesh_src_cmd(u16 op,u16 src,u8 *p_ac_par)
 #define GATEWAY_MAX_UPLOAD_CNT 0x20
 u8 gateway_upload_prov_cmd(u8 *p_cmd,u8 cmd)
 {
+#if 0
     u8 len =0;
     len = get_mesh_pro_str_len(cmd);
     if(len){
@@ -403,11 +470,13 @@ u8 gateway_upload_prov_cmd(u8 *p_cmd,u8 cmd)
         return gateway_common_cmd_rsp(HCI_GATEWAY_CMD_SEND,
                             (u8*)p_cmd,len);
     }
+#endif
     return 0;
 }
 
 u8 gateway_upload_prov_rsp_cmd(u8 *p_rsp,u8 cmd)
 {
+#if 0
     u8 len =0;
     len = get_mesh_pro_str_len(cmd);
     if(len){
@@ -417,13 +486,18 @@ u8 gateway_upload_prov_rsp_cmd(u8 *p_rsp,u8 cmd)
         return gateway_common_cmd_rsp(HCI_GATEWAY_DEV_RSP,
                             (u8*)p_rsp,len);
     }
+#endif
     return 0;
 }
 
 u8 gateway_upload_prov_link_open(u8 *p_cmd,u8 len)
 {
+#if 0
     return gateway_common_cmd_rsp(HCI_GATEWAY_CMD_LINK_OPEN,
                             (u8*)p_cmd,len);
+#else
+    return 0;
+#endif
 }
 
 u8 gateway_upload_prov_link_cls(u8 *p_rsp,u8 len)
@@ -434,6 +508,7 @@ u8 gateway_upload_prov_link_cls(u8 *p_rsp,u8 len)
 
 u8 gateway_upload_mesh_cmd_back_vc(material_tx_cmd_t *p)
 {
+#if 0
 	gateway_upload_mesh_cmd_str gateway_cmd;
 	u8 len ;
 	gateway_cmd.src = p->adr_src;
@@ -448,6 +523,9 @@ u8 gateway_upload_mesh_cmd_back_vc(material_tx_cmd_t *p)
 	len+=6;
 	return gateway_common_cmd_rsp(HCI_GATEWAY_CMD_SEND_BACK_VC,
                             (u8*)(&gateway_cmd),len);
+#else
+	return 0;
+#endif
 }
 u8 gateway_upload_log_info(u8 *p_data,u8 len ,char *format,...) //gateway upload the print info to the vc
 {
@@ -468,6 +546,40 @@ u8 gateway_upload_log_info(u8 *p_data,u8 len ,char *format,...) //gateway upload
 	return gateway_common_cmd_rsp(HCI_GATEWAY_CMD_LOG_STRING,(u8 *)log_str,head_len);
 }
 
+#if DEBUG_CFG_CMD_GROUP_AK_EN
+u8 comm_send_cnt = 0;
+u16 comm_adr_dst = 0;
+u32 comm_send_flag = 0;
+u32 comm_send_tick = 0;
+
+int mesh_tx_comm_cmd(u16 adr)
+{
+	comm_send_tick = clock_time();
+	comm_send_flag = 0;
+	u8 par[32] = {0};
+	mesh_bulk_vd_cmd_par_t *p_bulk_vd_cmd = (mesh_bulk_vd_cmd_par_t *)par;
+	p_bulk_vd_cmd->nk_idx = 0;
+    p_bulk_vd_cmd->ak_idx = 0;
+	p_bulk_vd_cmd->retry_cnt = g_reliable_retry_cnt_def;
+	p_bulk_vd_cmd->rsp_max = 1;
+	p_bulk_vd_cmd->adr_dst = adr;
+	p_bulk_vd_cmd->op = VD_MESH_TRANS_TIME_GET;
+	p_bulk_vd_cmd->vendor_id = g_vendor_id;
+	p_bulk_vd_cmd->op_rsp = VD_MESH_TRANS_TIME_STS;
+	p_bulk_vd_cmd->tid_pos = 0;
+	u8 par_len = OFFSETOF(mesh_bulk_vd_cmd_par_t, par) + (p_bulk_vd_cmd->tid_pos?2:1);
+	return mesh_bulk_cmd((mesh_bulk_cmd_par_t*)p_bulk_vd_cmd, par_len);
+}
+
+void mesh_ota_comm_test()
+{
+	int err =-1;
+	if(comm_send_flag && comm_send_cnt>0){
+		err = mesh_tx_comm_cmd(comm_adr_dst);
+		comm_send_cnt--;
+	}
+}
+#endif
 
 u8 gateway_cmd_from_host_ctl(u8 *p, u16 len )
 {
@@ -542,7 +654,44 @@ u8 gateway_cmd_from_host_ctl(u8 *p, u16 len )
 	}else if (op_code == HCI_GATEWAY_CMD_SEND_VC_NODE_INFO){
 		VC_node_info_t *p_info = (VC_node_info_t *)(p+1);
 		VC_node_dev_key_save(p_info->node_adr,p_info->dev_key,p_info->element_cnt);
+	}else if (op_code == HCI_GATEWAY_CMD_MESH_OTA_ADR_SEND){
+		#if MD_MESH_OTA_EN
+		mesh_fw_distibut_set(1);
+		mesh_cmd_sig_fw_distribut_start(p+1,len-1, 0);
+		#endif
 	}
+	#if MESH_RX_TEST
+	else if (op_code == HCI_GATEWAY_CMD_MESH_RX_TEST) {
+		u8 par[10];
+		u8 *data = &p[1];
+		memset(par,0x00,sizeof(par));
+		u16 adr_dst = data[2] + (data[3]<<8);
+		u8 rsp_max = data[4];	
+		par[0] = data[6]&0x01;//on_off	
+		u8 ack = data[5];
+		u32 send_tick = clock_time();
+		memcpy(par+4, &send_tick, 4);
+		par[8] = data[6];// cur count
+		u8 pkt_nums_send = data[7];
+		par[3] = data[8];// pkt_nums_ack	
+		u32 par_len = 37-(31-12)-6-4;
+		if(data[7] > 1){// unseg:11  seg:8
+			par_len = (37-(31-12)-4)*pkt_nums_send-6;
+		}
+		extern u16 mesh_rsp_rec_addr;
+		mesh_rsp_rec_addr = data[9] + (data[10]<<8);
+		SendOpParaDebug(adr_dst, rsp_max, ack ? G_ONOFF_SET : G_ONOFF_SET_NOACK, 
+						   (u8 *)&par, par_len);
+	}
+	#endif
+	#if DEBUG_CFG_CMD_GROUP_AK_EN
+	else if (op_code == HCI_GATEWAY_CMD_MESH_COMMUNICATE_TEST){
+	    comm_adr_dst = p[1]|(p[2]<<8);
+		comm_send_cnt = p[3];
+		comm_send_flag = 1;
+		mesh_tx_comm_cmd(comm_adr_dst);
+	}
+	#endif
 	return 1;
 }
 
@@ -609,8 +758,8 @@ void main_loop ()
 
 	////////////////////////////////////// UI entry /////////////////////////////////
 	//  add spp UI task:
-	proc_ui();
-	proc_led();
+	//proc_ui();//*****************************************************ÐÂ×¢ÊÍµô
+	//proc_led();//*****************************************************ÐÂ×¢ÊÍµô
 	factory_reset_cnt_check();
 	
 	mesh_loop_process();
@@ -640,16 +789,16 @@ void user_init()
 	proc_telink_mesh_to_sig_mesh();		// must at first
 	blc_app_loadCustomizedParameters();  //load customized freq_offset cap value and tp value
 
-	usb_id_init();
-	usb_log_init ();
+	//usb_id_init();//*************************************************ÐÂ×¢ÊÍµô
+	//usb_log_init ();//*************************************************ÐÂ×¢ÊÍµô
 	// need to have a simulate insert
-	usb_dp_pullup_en (0);  //open USB enum
-	gpio_set_func(GPIO_DP,AS_GPIO);
-	gpio_set_output_en(GPIO_DP,1);
-	gpio_write(GPIO_DP,0);
-	sleep_us(20000);
-	gpio_set_func(GPIO_DP,AS_USB);
-	usb_dp_pullup_en (1);  //open USB enum
+	//usb_dp_pullup_en (0);  //open USB enum//*************************************************ÐÂ×¢ÊÍµô
+	//gpio_set_func(GPIO_DP,AS_GPIO);//*************************************************ÐÂ×¢ÊÍµô
+	//gpio_set_output_en(GPIO_DP,1);//*************************************************ÐÂ×¢ÊÍµô
+	//gpio_write(GPIO_DP,0);//*************************************************ÐÂ×¢ÊÍµô
+	//sleep_us(20000);//*************************************************ÐÂ×¢ÊÍµô
+	//gpio_set_func(GPIO_DP,AS_USB);//*************************************************ÐÂ×¢ÊÍµô
+	//usb_dp_pullup_en (1);  //open USB enum//*************************************************ÐÂ×¢ÊÍµô
 
 	////////////////// BLE stack initialization ////////////////////////////////////
 	ble_mac_init();    
@@ -735,7 +884,9 @@ void user_init()
 	system_time_tick = clock_time();
 #if (BLT_SOFTWARE_TIMER_ENABLE)
 	blt_soft_timer_init();
-	//blt_soft_timer_add(&soft_timer_test0, 1*1000*1000);
+	blt_soft_timer_add(&soft_timer_test0, 10*1000);
+	blt_soft_timer_add(&soft_timer_test1, 1000*1000);
 #endif
+	gy_user_app_init();//³õÊ¼»¯£¬ÔÚuser_initÖÐµ÷ÓÃ
 }
 

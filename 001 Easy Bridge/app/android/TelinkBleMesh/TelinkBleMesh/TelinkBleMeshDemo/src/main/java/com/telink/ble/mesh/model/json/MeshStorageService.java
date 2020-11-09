@@ -334,9 +334,16 @@ public class MeshStorageService {
          */
         if (localProvisioner == null) {
             int low = maxRangeHigh + 1;
+
+            if(low + 0xFF > MeshUtils.UNICAST_ADDRESS_MAX){
+                MeshLogger.d("no available unicast range");
+                return false;
+            }
+
             mesh.unicastRange = new AddressRange(low, low + 0xFF);
             mesh.localAddress = low;
             mesh.provisionIndex = low + 1;
+            mesh.sequenceNumber = 0;
 //            MeshStorage.Provisioner.AddressRange unicastRange = localProvisioner.allocatedUnicastRange.get(0);
 //
 //            mesh.unicastRange = new AddressRange(low, high);
@@ -570,7 +577,7 @@ public class MeshStorageService {
         node.name = "Common Node";
 
         // check if appKey list exists to confirm device bound state
-        if (deviceInfo.state == NodeInfo.STATE_BIND_SUCCESS) {
+        if (deviceInfo.state >= NodeInfo.STATE_BIND_SUCCESS) {
             node.appKeys = new ArrayList<>();
             node.appKeys.add(new MeshStorage.NodeKey(0, false));
         }
